@@ -18,6 +18,7 @@
     "db:studio": "cd backend && npm run db:studio",
     "clean": "rm -rf backend/dist frontend/build",
     "clean:install": "npm run clean && npm run install:all"
+    "postinstall": "cd backend && npm install && cd ../frontend && npm install"
   },
   "devDependencies": {
     "concurrently": "^8.2.2",
