@@ -17,7 +17,7 @@
     "db:setup": "cd backend && npm run db:generate && npm run db:push",
     "db:studio": "cd backend && npm run db:studio",
     "clean": "rm -rf backend/dist frontend/build",
-    "clean:install": "npm run clean && npm run install:all"
+    "clean:install": "npm run clean && npm run install:all",
     "postinstall": "cd backend && npm install && cd ../frontend && npm install"
   },
   "devDependencies": {
