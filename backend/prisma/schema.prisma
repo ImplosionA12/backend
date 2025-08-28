@@ -1,0 +1,267 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Enums converted to strings for SQLite compatibility
+// Note: SQLite doesn't support enums, so we use strings instead
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  role      String   @default("STUDENT")  // Store role as string
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  profile Profile?
+  student Student?
+  faculty Faculty?
+  staff   Staff?
+
+  @@map("users")
+}
+
+
+model Profile {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  firstName   String
+  lastName    String
+  middleName  String?
+  dateOfBirth DateTime?
+  gender      String? // MALE, FEMALE, OTHER
+  phone       String?
+  address     String?
+  avatar      String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("profiles")
+}
+
+model Student {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  studentId     String   @unique
+  enrollmentDate DateTime @default(now())
+  graduationDate DateTime?
+  currentSemester Int     @default(1)
+  gpa           Float    @default(0.0)
+  isGraduated   Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Relations
+  enrollments    Enrollment[]
+  attendances    Attendance[]
+  grades         Grade[]
+  fees           Fee[]
+  borrowings     BookBorrowing[]
+
+  @@map("students")
+}
+
+model Faculty {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  employeeId      String   @unique
+  department      String
+  designation     String
+  hireDate        DateTime @default(now())
+  salary          Float?
+  qualification   String?
+  experience      Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Relations
+  courses         Course[]
+  attendances     Attendance[]
+
+  @@map("faculty")
+}
+
+model Staff {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  employeeId      String   @unique
+  department      String
+  designation     String
+  hireDate        DateTime @default(now())
+  salary          Float?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("staff")
+}
+
+model Course {
+  id              String   @id @default(cuid())
+  code            String   @unique
+  name            String
+  description     String?
+  credits         Int
+  duration        Int      // in weeks
+  maxStudents     Int      @default(50)
+  isActive        Boolean  @default(true)
+  facultyId       String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  faculty   Faculty?      @relation(fields: [facultyId], references: [id])
+  enrollments Enrollment[]
+
+  @@map("courses")
+}
+
+model Enrollment {
+  id        String   @id @default(cuid())
+  studentId String
+  courseId  String
+  semester  Int
+  year      Int
+  grade     String? // A, B, C, D, F, INCOMPLETE
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  course  Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, courseId, semester, year])
+  @@map("enrollments")
+}
+
+model Attendance {
+  id        String           @id @default(cuid())
+  studentId String
+  courseId  String
+  facultyId String
+  date      DateTime
+  status    String // PRESENT, ABSENT, LATE, EXCUSED
+  remarks   String?
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  faculty Faculty @relation(fields: [facultyId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, courseId, date])
+  @@map("attendance")
+}
+
+model Grade {
+  id        String    @id @default(cuid())
+  studentId String
+  courseId  String
+  semester  Int
+  year      Int
+  grade     String // A, B, C, D, F, INCOMPLETE
+  score     Float?
+  remarks   String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, courseId, semester, year])
+  @@map("grades")
+}
+
+model Fee {
+  id          String    @id @default(cuid())
+  studentId   String
+  type        String    // tuition, library, lab, etc.
+  amount      Float
+  dueDate     DateTime
+  status      String @default("PENDING") // PAID, PENDING, OVERDUE
+  paidDate    DateTime?
+  remarks     String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@map("fees")
+}
+
+model LibraryBook {
+  id          String   @id @default(cuid())
+  isbn        String   @unique
+  title       String
+  author      String
+  publisher   String?
+  year        Int?
+  category    String?
+  totalCopies Int      @default(1)
+  available   Int      @default(1)
+  location    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  borrowings BookBorrowing[]
+
+  @@map("library_books")
+}
+
+model BookBorrowing {
+  id        String   @id @default(cuid())
+  bookId    String
+  studentId String
+  borrowDate DateTime @default(now())
+  dueDate   DateTime
+  returnDate DateTime?
+  isReturned Boolean  @default(false)
+  fine      Float    @default(0.0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  book    LibraryBook @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  student Student     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@map("book_borrowings")
+}
+
+model Event {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  startDate   DateTime
+  endDate     DateTime
+  location    String?
+  organizer   String
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("events")
+}
+
+model Announcement {
+  id        String   @id @default(cuid())
+  title     String
+  content   String
+  priority  String   @default("normal") // low, normal, high, urgent
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("announcements")
+} 

@@ -1,0 +1,33 @@
+{
+  "name": "college-management-backend",
+  "description": "Backend API for College Management System",
+  "repository": "https://github.com/yourusername/college-management-system",
+  "logo": "https://node-js-sample.herokuapp.com/node.png",
+  "keywords": ["node", "express", "typescript", "prisma"],
+  "env": {
+    "NODE_ENV": {
+      "description": "Environment setting",
+      "value": "production"
+    },
+    "JWT_SECRET": {
+      "description": "JWT secret key",
+      "generator": "secret"
+    }
+  },
+  "buildpacks": [
+    {
+      "url": "heroku/nodejs"
+    }
+  ],
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "basic"
+    }
+  },
+  "addons": [
+    {
+      "plan": "heroku-postgresql:mini"
+    }
+  ]
+}
